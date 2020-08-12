@@ -1,18 +1,28 @@
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.TreeMap;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 public class ReadTextFromFile {
-    public static void GetFileAndRead(String pathname) throws FileNotFoundException {
-        Scanner in = new Scanner(new File(pathname), "UTF-8");
-        Map<String, Integer> countWords = new TreeMap<>();
-        while (in.hasNext()) {
-            in.useDelimiter("\\PL+");
-            String word = in.next();
-            countWords.merge(word, 1, Integer::sum);
+    public static void GetFileAndRead(String pathname) throws IOException {
+        Scanner in = new Scanner(new File(pathname), StandardCharsets.UTF_8);
+        var count = new HashMap<String, Set<String>>();
+        var line = 1;
+        while(in.hasNextLine()) {
+            var words = in.nextLine().split(" ");
+            for (var word : words) {
+                if (!(word.isEmpty())) // zabezpieczenie przed plikami tekstowymi w których są puste linie
+                {
+                    var lines = count.getOrDefault(word, new TreeSet<>()); // tworzy połączenie pomiędzy danym słowem a numerem linijki wystąpienia
+                    lines.add(String.valueOf(line)); // dodaje do zestawu kolejny numer linijki w której wystąpiło słowo
+                    count.put(word, lines); // dodaje kolejny wpis do mapy złożony z nazwą słowa i linijkami występowania
+                }
+            }
+            line++;
         }
-        System.out.println(countWords);
+        for (var entry : count.entrySet()) { // lista wszystkich słów i numerów linijek występowania
+            System.out.println("Słowo '" + entry.getKey().replaceAll("\\p{Punct}", "") + "' znajduje się w linijkach " + String.join(",", entry.getValue())); // metoda replaceAll użyta do usunięcia znaków interpukcyjnych ze słów
+        }
+        in.close();
     }
 }
